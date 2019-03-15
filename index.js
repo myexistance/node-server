@@ -1,82 +1,153 @@
-const http =require('http');
-const fs =require('fs');
-const path =require('path');
-// const data =require('data');
-const qs =require('querystring'); // read the url with the query string
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const data = require('./data/products');
+const qs = require('querystring');
 
+var server = http.createServer(function(request, response){
+    console.log(`${request.method} request for ${request.url}`);
 
-//create a server
-var server = http.createServer(function(request,response){
-if (request.method ==="GET") {
-  if (request.url === "/" || request.url === "/home" || request.url === "/index") {
-
-    fs.readFile('./public/index.html','UTF-8', function(err,contents) {
-      if (err) {
-        console.log("error");
-      } else {
-        response.writeHead(200, {'Content-Type':  'text/html'});
-        response.end(contents);
-      } //if else
-    }) // readFile ends
-  } // checking url ends
-
-
-  else if (request.url === "/about" || request.url === "/about.html") {
-
-    fs.readFile('./public/about.html','UTF-8', function(err,contents) {
-      if (error) {
-        console.log("error");
-      } else {
-        response.writeHead(200, {'Content-Type':  'text/html'});
-        response.end(contents);
-      } //if else
-    }) // readFile ends
-  } // checking url ends
-
-
-  else if (request.url === "/news" || request.url === "/news.html") {
-
-    fs.readFile('./public/news.html','UTF-8', function(err,contents) {
-      if (error) {
-        console.log("error");
-      } else {
-        response.writeHead(200, {'Content-Type':  'text/html'});
-        response.end(contents);
-      } //if else
-    }) // readFile ends
-  } // checking url ends
-
-
-  else if (request.url === "/contacts" || request.url === "/contacts.html") {
-
-    fs.readFile('./public/contacts.html','UTF-8', function(err,contents) {
-      if (error) {
-        console.log("error");
-      } else {
-        response.writeHead(200, {'Content-Type':  'text/html'});
-        response.end(contents);
-      } //if else
-    }) // readFile ends
-  } // checling url ends
-  // requested url must be css file and that file is checked for matching
-  else if (request.url.match(/.css$/)) {
-    var cssPath = path.join(__dirname,'public', request.url); //get the path
-    var fileStream = fs.createReadStream(cssPath, 'UTF-8'); // creating file fileStream
-    response.writeHead(200, 200, {'Content-Type':  'text/css'});
-    fileStream.pipe(response);
-  } // css path
-
-
-
-
-
-} // GET methods ends
-
-
+    if(request.method === "GET"){
+        if(request.url === "/" || request.url === "/home" || request.url === "/index"){
+            fs.readFile('./public/index.html', 'UTF-8', function(error, contents){
+                if(error){
+                    console.log("error, something went wrong");
+                } else {
+                    response.writeHead(200, {'Content-Type':'text/html'});
+                    response.end(contents);
+                }
+            });
+        } else if(request.url === "/about" || request.url === "/about.html"){
+            fs.readFile('./public/about.html', 'UTF-8', function(error, contents){
+                if(error){
+                    console.log("error, something went wrong");
+                } else {
+                    response.writeHead(200, {'Content-Type':'text/html'});
+                    response.end(contents);
+                }
+            });
+        } else if(request.url === "/contact"){
+            fs.readFile('./public/contact.html', 'UTF-8', function(error, contents){
+                if(error){
+                    console.log("error, something went wrong");
+                } else {
+                    response.writeHead(200, {'Content-Type':'text/html'});
+                    response.end(contents);
+                }
+            });
+        } else if(request.url === "/news"){
+            fs.readFile('./public/news.html', 'UTF-8', function(error, contents){
+                if(error){
+                    console.log("error, something went wrong");
+                } else {
+                    response.writeHead(200, {'Content-Type':'text/html'});
+                    response.end(contents);
+                }
+            });
+        } else if(request.url.match(/.js$/)){
+            var jsPath = path.join(__dirname, 'public', request.url);
+            var fileStream = fs.createReadStream(jsPath, 'UTF-8');
+            response.writeHead(200, {'Content-Type': 'text/javascript'});
+            fileStream.pipe(response);
+        } else if(request.url.match(/.css$/)){
+            var cssPath = path.join(__dirname, 'public', request.url);
+            var fileStream = fs.createReadStream(cssPath, 'UTF-8');
+            response.writeHead(200, {'Content-Type': 'text/css'});
+            fileStream.pipe(response);
+        } else if(request.url.match(/.jpg$/)){
+    		var imagePath = path.join(__dirname, 'public', request.url);
+    		var imageStream = fs.createReadStream(imagePath);
+    		response.writeHead(200, {'Content-Type':'image/jpeg'});
+    		imageStream.pipe(response);
+    	} else if(request.url.match(/.png$/)){
+    		var imagePath = path.join(__dirname, 'public', request.url);
+    		var imageStream = fs.createReadStream(imagePath);
+    		response.writeHead(200, {'Content-Type':'image/png'});
+    		imageStream.pipe(response);
+    	} else if(request.url === '/allProducts'){
+            response.writeHead(200, {'Content-Type': 'text/json'});
+            response.end(JSON.stringify(data));
+        } else if(request.url === '/inStock'){
+            inStock(response);
+        }
 
 
 
 
 
-}).listen(3000);
-console.log("server running at http://192.168.33.10:3000/");
+    } else if(request.method === "POST"){
+        if(request.url === '/formSubmit'){
+            var body = '';
+
+            request.on('data', function(data){
+                body += data;
+            })
+
+            request.on('end', function(){
+                var formData = qs.parse(body);
+                console.log(formData);
+                response.writeHead(302, {
+                  'Location': '/'
+                });
+                response.end();
+            })
+
+        }
+    }
+
+
+
+
+
+
+
+
+    // else if(request.url === "/contact"){
+    //     page = "contact";
+    // } else if(request.url === "/about"){
+    //     page = "about";
+    // } else {
+    //     page = "404 page not found";
+    // }
+
+    // response.writeHead(200, {'Content-Type':'text/html'});
+    // response.end(`
+    //     <html>
+    //         <head>
+    //             <title>Node Server</title>
+    //         </head>
+    //         <body>
+    //             <h1>${page}</h1>
+    //             <p>${request.url}</p>
+    //             <p>${request.method}</p>
+    //         </body>
+    //     </html>
+    //     `);
+});
+server.listen(3000);
+
+console.log("The server is running on port 3000");
+
+
+
+function inStock(response){
+    var stock = data.filter(function(item){
+        return item.inStock === true;
+    });
+    response.end(JSON.stringify(stock));
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// end
